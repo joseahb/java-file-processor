@@ -1,11 +1,13 @@
 package com.joseahb.fileprocessor;
 
 import java.io.InputStream;
+import java.lang.ProcessBuilder.Redirect.Type;
 import java.util.Iterator;
 import org.apache.poi.util.XMLHelper;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
 import org.apache.poi.xssf.model.SharedStringsTable;
+import org.w3c.dom.TypeInfo;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
@@ -65,7 +67,7 @@ public class FileReader {
             // c => cell
             if(name.equals("c")) {
                 // Print the cell reference
-                System.out.print(attributes.getValue("r") + " - ");
+                // System.out.print(attributes.getValue("r") + " - ");
                 // Figure out if the value is an index in the SST
                 String cellType = attributes.getValue("t");
                 if(cellType != null && cellType.equals("s")) {
@@ -84,6 +86,7 @@ public class FileReader {
             if(nextIsString) {
                 int idx = Integer.parseInt(lastContents);
                 lastContents = sst.getItemAt(idx).getString();
+                System.out.println("test values=>" + lastContents);
                 nextIsString = false;
             }
             // v => contents of a cell
