@@ -8,32 +8,26 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "procexcel", version = "Prcocess-excel 1.0", mixinStandardHelpOptions = true)
-public class ProcessFileCommand implements Runnable {
-  private String fileName = "";
-  private File file = null;
-  // Constructor
-  ProcessFileCommand (String[] args)  {
-    if ( args.length > 0 ) {
-      this.file = new File(args[0]);
-      this.fileName = this.file.getName();
-    }
-  }
+public class ProcessFileCommand implements Runnable { 
 
-  @Parameters(paramLabel= "<xlsx-file>")
+  @Parameters(paramLabel= "<xlsxfile>", defaultValue = "sample.xlsx",  // |4|
+  description = "Spreadsheet file to be processed")
+
+  private String xlsxfile = "sample.xlsx";
+  
   @Override
   public void run(){
-      FileReader r = new FileReader();
-      try {
-        r.processOneSheet(this.fileName);
-      } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      try {
-        r.processAllSheets(this.fileName);
-      } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
+    FileReader r = new FileReader();
+    try {
+      r.processOneSheet(xlsxfile);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    try {
+      r.processAllSheets(xlsxfile);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }
+

@@ -34,6 +34,7 @@ public class FileReader {
         SharedStringsTable sst = r.getSharedStringsTable();
         XMLReader parser = fetchSheetParser(sst);
         Iterator<InputStream> sheets = r.getSheetsData();
+        System.out.println("Processing All sheet:\n");
         while(sheets.hasNext()) {
             System.out.println("Processing new sheet:\n");
             InputStream sheet = sheets.next();
