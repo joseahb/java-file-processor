@@ -25,20 +25,19 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class FileReader {
-    private ArrayList<String> data;
-    public void processOneSheet(String filename) throws Exception {
-        OPCPackage pkg = OPCPackage.open(filename);
-        XSSFReader r = new XSSFReader( pkg );
-        SharedStringsTable sst = r.getSharedStringsTable();
-        XMLReader parser = fetchSheetParser(sst);
+    // public void processOneSheet(String filename) throws Exception {
+    //     OPCPackage pkg = OPCPackage.open(filename);
+    //     XSSFReader r = new XSSFReader( pkg );
+    //     SharedStringsTable sst = r.getSharedStringsTable();
+    //     XMLReader parser = fetchSheetParser(sst);
         // To look up the Sheet Name / Sheet Order / rID,
         //  you need to process the core Workbook stream.
         // Normally it's of the form rId# or rSheet#
-        InputStream sheet2 = r.getSheet("rId2");
-        InputSource sheetSource = new InputSource(sheet2);
-        parser.parse(sheetSource);
-        sheet2.close();
-    }
+    //     InputStream sheet2 = r.getSheet("rId2");
+    //     InputSource sheetSource = new InputSource(sheet2);
+    //     parser.parse(sheetSource);
+    //     sheet2.close();
+    // }
     public void processAllSheets(String filename) throws Exception {
         OPCPackage pkg = OPCPackage.open(filename);
         XSSFReader r = new XSSFReader( pkg );
@@ -47,12 +46,12 @@ public class FileReader {
         Iterator<InputStream> sheets = r.getSheetsData();
         System.out.println("Processing All sheet:\n");
         while(sheets.hasNext()) {
-            System.out.println("Processing new sheet:\n");
+            System.out.println("============Processing new sheet:=================\n");
             InputStream sheet = sheets.next();
             InputSource sheetSource = new InputSource(sheet);
             parser.parse(sheetSource);
             sheet.close();
-            System.out.println("Done");
+            System.out.println("===========Sheet Processing Done==================");
         }
     }
     public XMLReader fetchSheetParser(SharedStringsTable sst) throws SAXException, ParserConfigurationException {
@@ -67,70 +66,71 @@ public class FileReader {
     private static class SheetHandler extends DefaultHandler {
         private SharedStringsTable sst;
         private String lastContents;
-        private boolean nextIsString;
-        ArrayList<String> tmp;
+        // private boolean nextIsString;
+        private String fieldName;
+        private Boolean transactionInfo = false;
+        private Boolean amount = false;
+        ArrayList<String> data = new ArrayList<String>();
+
         private SheetHandler(SharedStringsTable sst) {
             this.sst = sst;
         }
         public void startElement(String uri, String localName, String name,
                                  Attributes attributes) throws SAXException {
-            
-            String cellType = attributes.getValue("t"); // get the cell type
+            // String cellType = attributes.getValue("t"); // get the cell type
             // c => cell
             if(name.equals("c")) {
                 // Print the cell reference
-                // System.out.print(attributes.getValue("r") + " - ");
-                // Figure out if the value is an index in the SST
-                if(cellType != null && cellType.equals("s")) {
-                    nextIsString = true;
-                }
-                 else {
-                    nextIsString = false;
+                fieldName = attributes.getValue("r");
+                switch (fieldName.charAt(0)) {
+                    case 'D':
+                        transactionInfo = true;
+                        break;
+                    case 'G':
+                        amount = true;
+                    default:
+                        return;
                 }
             }
             // Clear contents cache
             lastContents = "";
-            tmp = null;
         }
         public void endElement(String uri, String localName, String name)
                 throws SAXException {
-            // Process the last contents as required.
-            // Do now, as characters() may be called more than once
-            if(nextIsString) {
-                int idx = Integer.parseInt(lastContents);
-                lastContents = sst.getItemAt(idx).getString();
-                if (isTransactionInfo(lastContents)){
-                    String[] extracted = extractData(lastContents).toArray(new String[0]);
-                    System.out.println(extracted);
-
-                    // tmp.add(extracted.toString());
-                }
-                nextIsString = false;
-            }
             // v => contents of a cell
             // Output after we've seen the string contents
             if(name.equals("v")) {
-                // System.out.println("temp:" + tmp);
-                System.out.println(lastContents);
+                // Process the last contents as required.
+                // Do now, as characters() may be called more than once
+                String rowExtracted = "";
+                if(transactionInfo) {
+                    int idx = Integer.parseInt(lastContents);
+                    lastContents = sst.getItemAt(idx).getString();
+                    String extracted = extractData(lastContents);
+                    rowExtracted += extracted;
+                    transactionInfo = false;
+                }
+                if(amount){
+                    rowExtracted+=lastContents;
+                    amount = false;
+                }
+                if (rowExtracted != "") {
+                    this.data.add(rowExtracted);
+                }
             }
         }
-
-       public void characters(char[] ch, int start, int length) {
+        public void characters(char[] ch, int start, int length) {
             lastContents += new String(ch, start, length);
         }
-    }
-    public static Boolean isTransactionInfo (String cellContent) {
-        if (cellContent.startsWith("Pesalink") && cellContent.length() > 22) {
-            return true;
-        } else {
-            return false;
+        public void endDocument() throws SAXException {
+            System.out.println(this.data);
         }
     }
-    public static ArrayList<String> extractData(String cellContent){
+    public static String extractData(String cellContent){
         String[] splitContent = cellContent.split(" ");
         String account = "";
         String fullname = "";
-        ArrayList<String>  data = null;
+        String extractedData = "";
         for (int i = 0; i < splitContent.length; i++) {
             if (splitContent[i].startsWith("0747")) {
                 account = splitContent[i];
@@ -138,8 +138,7 @@ public class FileReader {
                 fullname = name;
             }
         }
-        data.add(fullname);
-        data.add(account);
-        return data; 
+        extractedData = account + "," + fullname;
+        return extractedData; 
     }
 }
