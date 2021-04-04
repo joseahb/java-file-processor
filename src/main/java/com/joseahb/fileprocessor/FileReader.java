@@ -108,6 +108,7 @@ public class FileReader {
                     amount = false;
                 }
                 if (rowExtracted != "") {
+                    rowExtracted.replaceAll(",", " ");
                     this.data.add(rowExtracted);
                 }
             }
