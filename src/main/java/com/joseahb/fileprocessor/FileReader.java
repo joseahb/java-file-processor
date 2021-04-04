@@ -1,28 +1,21 @@
 package com.joseahb.fileprocessor;
 
 import java.io.InputStream;
-import java.lang.ProcessBuilder.Redirect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 
-import org.apache.poi.util.SystemOutLogger;
-import org.apache.poi.util.XMLHelper;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.poi.openxml4j.opc.OPCPackage;
-import org.apache.poi.ss.usermodel.BuiltinFormats;
-import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.util.XMLHelper;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
 import org.apache.poi.xssf.model.SharedStringsTable;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.w3c.dom.TypeInfo;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
-import javax.xml.parsers.ParserConfigurationException;
 
 public class FileReader {
     // public void processOneSheet(String filename) throws Exception {
@@ -111,7 +104,7 @@ public class FileReader {
                     transactionInfo = false;
                 }
                 if(amount){
-                    rowExtracted+=lastContents;
+                    rowExtracted+= " " + lastContents;
                     amount = false;
                 }
                 if (rowExtracted != "") {
@@ -138,7 +131,7 @@ public class FileReader {
                 fullname = name;
             }
         }
-        extractedData = account + "," + fullname;
+        extractedData = account + fullname;
         return extractedData; 
     }
 }
