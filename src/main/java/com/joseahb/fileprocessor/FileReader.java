@@ -2,11 +2,19 @@ package com.joseahb.fileprocessor;
 
 import java.io.InputStream;
 import java.lang.ProcessBuilder.Redirect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
+
+import org.apache.poi.util.SystemOutLogger;
 import org.apache.poi.util.XMLHelper;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.BuiltinFormats;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
 import org.apache.poi.xssf.model.SharedStringsTable;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.w3c.dom.TypeInfo;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -17,6 +25,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class FileReader {
+    private ArrayList<String> data;
     public void processOneSheet(String filename) throws Exception {
         OPCPackage pkg = OPCPackage.open(filename);
         XSSFReader r = new XSSFReader( pkg );
@@ -59,25 +68,29 @@ public class FileReader {
         private SharedStringsTable sst;
         private String lastContents;
         private boolean nextIsString;
+        ArrayList<String> tmp;
         private SheetHandler(SharedStringsTable sst) {
             this.sst = sst;
         }
         public void startElement(String uri, String localName, String name,
                                  Attributes attributes) throws SAXException {
+            
+            String cellType = attributes.getValue("t"); // get the cell type
             // c => cell
             if(name.equals("c")) {
                 // Print the cell reference
                 // System.out.print(attributes.getValue("r") + " - ");
                 // Figure out if the value is an index in the SST
-                String cellType = attributes.getValue("t");
                 if(cellType != null && cellType.equals("s")) {
                     nextIsString = true;
-                } else {
+                }
+                 else {
                     nextIsString = false;
                 }
             }
             // Clear contents cache
             lastContents = "";
+            tmp = null;
         }
         public void endElement(String uri, String localName, String name)
                 throws SAXException {
@@ -86,12 +99,18 @@ public class FileReader {
             if(nextIsString) {
                 int idx = Integer.parseInt(lastContents);
                 lastContents = sst.getItemAt(idx).getString();
-                System.out.println("test values=>" + lastContents);
+                if (isTransactionInfo(lastContents)){
+                    String[] extracted = extractData(lastContents).toArray(new String[0]);
+                    System.out.println(extracted);
+
+                    // tmp.add(extracted.toString());
+                }
                 nextIsString = false;
             }
             // v => contents of a cell
             // Output after we've seen the string contents
             if(name.equals("v")) {
+                // System.out.println("temp:" + tmp);
                 System.out.println(lastContents);
             }
         }
@@ -99,5 +118,28 @@ public class FileReader {
        public void characters(char[] ch, int start, int length) {
             lastContents += new String(ch, start, length);
         }
+    }
+    public static Boolean isTransactionInfo (String cellContent) {
+        if (cellContent.startsWith("Pesalink") && cellContent.length() > 22) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    public static ArrayList<String> extractData(String cellContent){
+        String[] splitContent = cellContent.split(" ");
+        String account = "";
+        String fullname = "";
+        ArrayList<String>  data = null;
+        for (int i = 0; i < splitContent.length; i++) {
+            if (splitContent[i].startsWith("0747")) {
+                account = splitContent[i];
+                String name = splitContent[i+1] + " " +splitContent[i+2].replaceAll("[0123456789]","");
+                fullname = name;
+            }
+        }
+        data.add(fullname);
+        data.add(account);
+        return data; 
     }
 }
