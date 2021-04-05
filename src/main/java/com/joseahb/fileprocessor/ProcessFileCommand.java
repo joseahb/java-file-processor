@@ -1,32 +1,22 @@
 package com.joseahb.fileprocessor;
 
-// import java.io.File;
-// import java.io.IOException;
-
 // import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Option;
 
 @Command(name = "procexcel", version = "Prcocess-excel 1.0", mixinStandardHelpOptions = true)
 public class ProcessFileCommand implements Runnable { 
 
-  @Parameters(paramLabel= "<xlsxfile>", defaultValue = "sample.xlsx",
-  description = "Spreadsheet file to be processed")
-
-  private String xlsxfile = "sample.xlsx";
+  @Option(names = { "-f", "--file" }, paramLabel = "excelFile", description = "the Excel file{.xlsx}")
+  String excelFile;
   
+  // @Parameters(index="0", paramLabel= "<xlsxfile>", 
+  // description = "Spreadsheet file to be processed") String xlsxfile;
   @Override
   public void run(){
-    FileReader r = new FileReader();
-
-    // try {
-    //   r.processOneSheet(xlsxfile);
-    // } catch (Exception e) {
-    //   e.printStackTrace();
-    // }
-    
+    FileReader r = new FileReader();    
     try {
-      r.processAllSheets(xlsxfile);
+      r.processAllSheets(excelFile);
     } catch (Exception e) {
       e.printStackTrace();
     }

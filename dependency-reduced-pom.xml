@@ -28,7 +28,7 @@
               </filters>
               <transformers>
                 <transformer>
-                  <mainClass>com.joseahb.fileprocessor.ProcessFile</mainClass>
+                  <mainClass>com.joseahb.fileprocessor.App</mainClass>
                 </transformer>
               </transformers>
               <compilerArgs>
