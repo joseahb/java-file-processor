@@ -6,6 +6,8 @@ import java.util.Iterator;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import com.microsoft.schemas.office.visio.x2012.main.CellType;
+
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.util.XMLHelper;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
@@ -62,6 +64,7 @@ public class FileReader {
         // private boolean nextIsString;
         private String fieldName;
         private Boolean transactionInfo = false;
+        private Boolean tid = false;
         private Boolean amount = false;
         ArrayList<String> data = new ArrayList<String>();
 
@@ -76,6 +79,9 @@ public class FileReader {
                 // Print the cell reference
                 fieldName = attributes.getValue("r");
                 switch (fieldName.charAt(0)) {
+                    case 'B':
+                        tid = true;
+                        break;
                     case 'D':
                         transactionInfo = true;
                         break;
@@ -96,19 +102,27 @@ public class FileReader {
                 // Process the last contents as required.
                 // Do now, as characters() may be called more than once
                 String rowExtracted = "";
-                if(transactionInfo) {
+                if(tid){
                     int idx = Integer.parseInt(lastContents);
                     lastContents = sst.getItemAt(idx).getString();
-                    String extracted = extractData(lastContents);
-                    rowExtracted += extracted;
+                    rowExtracted += lastContents;
+                    tid = false;
+                }
+                if(transactionInfo) {
+
+                    int idx = Integer.parseInt(lastContents);
+                    lastContents = sst.getItemAt(idx).getString();
+
+                    String accountInfo = extractData(lastContents);
+                    rowExtracted += accountInfo;
+
                     transactionInfo = false;
                 }
                 if(amount){
-                    rowExtracted+= " " + lastContents;
+                    rowExtracted += " " + lastContents + "\n";
                     amount = false;
                 }
                 if (rowExtracted != "") {
-                    rowExtracted.replaceAll(",", " ");
                     this.data.add(rowExtracted);
                 }
             }
@@ -132,7 +146,7 @@ public class FileReader {
                 fullname = name;
             }
         }
-        extractedData = account + fullname;
+        extractedData = account + " " +fullname;
         return extractedData; 
     }
 }
